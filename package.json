@@ -1,0 +1,56 @@
+{
+  "name": "p5js-sketch-server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local hot-reloadable gallery and dev server for p5.js sketches",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "create-sketch": "tsx scripts/create-sketch.ts",
+    "delete-sketch": "tsx scripts/delete-sketch.ts",
+    "update-sketch-meta": "tsx scripts/update-sketch-meta.ts"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.1.1",
+    "@tanstack/react-table": "^8.20.6",
+    "clsx": "^2.1.1",
+    "p5": "^1.11.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.1.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.10.2",
+    "@types/p5": "^1.7.6",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.16",
+    "globals": "^15.14.0",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.4.2",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "vite": "^6.0.5",
+    "vitest": "^3.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "esbuild@0.25.12": true
+  }
+}

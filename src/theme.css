@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/*
+ * Dark-by-default theme (research D3). There is no light theme / toggle — dark is
+ * the single theme. Design tokens live here and are consumed via Tailwind utilities
+ * (e.g. bg-surface, text-fg, border-edge) and a few base styles below.
+ */
+@theme {
+  --color-bg: #0a0a0b;
+  --color-surface: #131316;
+  --color-surface-2: #1b1b20;
+  --color-edge: #2a2a31;
+  --color-fg: #ededf0;
+  --color-muted: #9a9aa6;
+  --color-accent: #7c6cff;
+  --color-accent-fg: #ffffff;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "Fira Code", monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Canvases render at their native size; the wrapping container scrolls when the
+   screen is too small, rather than squashing/scaling the canvas. */
+canvas {
+  display: block;
+}

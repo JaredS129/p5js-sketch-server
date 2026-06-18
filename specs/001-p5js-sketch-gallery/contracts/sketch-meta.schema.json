@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://p5js-sketch-server/contracts/sketch-meta.schema.json",
+  "title": "SketchMeta",
+  "description": "Per-sketch metadata stored at sketches/<id>/meta.json. Written by CLI scripts, read by the view-only UI. No database.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "dateCreated", "dateUpdated", "createdBy", "lastUpdatedBy"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "URL-safe slug; MUST equal the containing folder name and the routing id.",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "minLength": 1,
+      "examples": ["flow-field", "particle-system-2"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-friendly display name (original input to create-sketch).",
+      "minLength": 1,
+      "examples": ["Flow Field"]
+    },
+    "dateCreated": {
+      "type": "string",
+      "description": "ISO 8601 date the sketch was created. Immutable after creation.",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "dateUpdated": {
+      "type": "string",
+      "description": "ISO 8601 date of the latest commit that changed sketch code. Equals dateCreated until update-sketch-meta runs.",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "createdBy": {
+      "type": "string",
+      "description": "Git user name captured at creation time. Immutable after creation.",
+      "minLength": 1,
+      "examples": ["Jared Stevenson"]
+    },
+    "lastUpdatedBy": {
+      "type": "string",
+      "description": "Git user name of the latest commit that changed sketch code. Equals createdBy until update-sketch-meta runs.",
+      "minLength": 1,
+      "examples": ["Jared Stevenson"]
+    }
+  }
+}
