@@ -5,6 +5,8 @@ name: Update sketch metadata
 
 on:
   pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
@@ -12,12 +14,13 @@ permissions:
 jobs:
   update-sketch-meta:
     runs-on: ubuntu-latest
-    # Skip forked PRs: they cannot push back to the source branch.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # On push, always run. On PRs, skip forks: they cannot push back to the source branch.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          # On PRs, check out the head branch; on push, the pushed ref (refs/heads/main).
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
           fetch-depth: 0 # full history so commit-range attribution works
 
       - uses: actions/setup-node@v4
@@ -30,6 +33,8 @@ jobs:
       - name: Refresh metadata
         env:
           GITHUB_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          # On push, diff against the tip before the push (empty on PRs / branch creation).
+          BASE_REF: ${{ github.event.before }}
         run: npm run update-sketch-meta
 
       - name: Commit changes
