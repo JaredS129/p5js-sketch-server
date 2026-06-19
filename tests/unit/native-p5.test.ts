@@ -101,6 +101,27 @@ describe("convertToNative — transform rules", () => {
     expect(out).toContain("const { x, y } = v;");
   });
 
+  it("R6: removes type-only declarations (interface / type alias) entirely", () => {
+    const out = code(`export default function sketch(p: p5): void {\n  interface Props {\n    x: number;\n    y: number;\n  }\n  type Id = string;\n  let n: number = 1;\n  p.setup = () => { p.print(n); };\n}\n`);
+    expect(out).not.toContain("interface");
+    expect(out).not.toContain("type Id");
+    expect(out).toContain("let n = 1;");
+    expect(out).toContain("function setup() {");
+  });
+
+  it("R6: drops uninitialized class fields (TS type-only) but keeps initialized ones", () => {
+    const out = code(`export default function sketch(p: p5): void {\n  class Player {\n    readonly startX: number;\n    private posX: number;\n    static count: number = 0;\n    constructor() { this.posX = 0; }\n  }\n  p.setup = () => { new Player(); };\n}\n`);
+    // Uninitialized fields are type-only members — removed entirely, NOT emitted
+    // as bare `x;` class fields (which the p5 web editor's parser rejects).
+    expect(out).not.toMatch(/^\s*startX;?\s*$/m);
+    expect(out).not.toMatch(/^\s*posX;?\s*$/m);
+    // Initialized field is kept (runtime-meaningful); type + TS modifiers stripped.
+    expect(out).toContain("static count = 0;"); // `static` is valid JS, kept
+    expect(out).not.toContain("readonly");
+    expect(out).not.toContain(": number");
+    expect(out).toContain("this.posX = 0;"); // constructor body untouched
+  });
+
   it("supports an exported default arrow factory with a non-`p` instance name", () => {
     const out = code(`export default (sk: p5): void => {\n  sk.setup = () => { sk.background(0); };\n};\n`);
     expect(out).toContain("function setup() {");

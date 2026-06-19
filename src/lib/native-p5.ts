@@ -16,6 +16,19 @@ function isP5Module(specifier: string): boolean {
   return specifier === "p5" || specifier.startsWith("p5/");
 }
 
+/** Modifier keywords that exist only in TypeScript and have no runtime form, so
+ *  they must be stripped from class members in the native output. `static` and
+ *  `async` are valid JavaScript and are intentionally absent. */
+const TS_ONLY_MODIFIERS = new Set<ts.SyntaxKind>([
+  ts.SyntaxKind.ReadonlyKeyword,
+  ts.SyntaxKind.PublicKeyword,
+  ts.SyntaxKind.PrivateKeyword,
+  ts.SyntaxKind.ProtectedKeyword,
+  ts.SyntaxKind.AbstractKeyword,
+  ts.SyntaxKind.OverrideKeyword,
+  ts.SyntaxKind.DeclareKeyword,
+]);
+
 /** A text edit applied to the original source: replace [start, end) with `text`. */
 interface Edit {
   start: number;
@@ -120,8 +133,50 @@ export function convertToNative(source: string): NativeConversion {
   const inHeader = (pos: number) =>
     headerRegions.some(([s, e]) => pos >= s && pos < e);
 
+  // Edit that deletes the whole line(s) a node occupies — its leading indentation
+  // through its trailing newline, plus any blank lines immediately after it — so a
+  // wholesale-removed declaration leaves no dangling gap for the dedent pass.
+  const removeWholeLines = (node: ts.Node): Edit => {
+    let start = node.getStart(sf);
+    while (start > bodyStart && source[start - 1] !== "\n") start--;
+    let end = node.getEnd();
+    while (end < bodyEnd && source[end] !== "\n") end++;
+    if (end < bodyEnd) end++; // the node's own trailing newline
+    // Collapse blank lines left behind so removal doesn't double up separators.
+    while (end < bodyEnd) {
+      let i = end;
+      while (i < bodyEnd && (source[i] === " " || source[i] === "\t")) i++;
+      if (i < bodyEnd && source[i] === "\n") end = i + 1;
+      else break;
+    }
+    return { start, end, text: "" };
+  };
+
   // --- Walk the whole tree for prefix removal, type stripping, as/satisfies ---
   const visit = (node: ts.Node) => {
+    // R6: drop type-only declarations entirely (`interface … {}`, `type … = …`).
+    // They have no runtime form, so they must not appear in the native output.
+    if (
+      (ts.isInterfaceDeclaration(node) || ts.isTypeAliasDeclaration(node)) &&
+      !inHeader(node.getStart(sf))
+    ) {
+      edits.push(removeWholeLines(node));
+      return; // don't descend; the whole declaration is being removed
+    }
+
+    // R6: drop class fields that have no initializer (`readonly x: number;`).
+    // These are TypeScript type-only members with no runtime effect — and the
+    // bare class-field syntax they'd reduce to (`x;`) is rejected by the p5 web
+    // editor's parser. Fields WITH an initializer (`x = 0;`) are kept below.
+    if (
+      ts.isPropertyDeclaration(node) &&
+      !node.initializer &&
+      !inHeader(node.getStart(sf))
+    ) {
+      edits.push(removeWholeLines(node));
+      return; // don't descend; the whole declaration is being removed
+    }
+
     // R5b: drop destructuring of the p5 instance (`const { a, b } = p;`). In
     // global mode those members are accessible globally, so the binding is dead
     // weight; the references it introduced resolve to the globals unchanged.
@@ -131,15 +186,20 @@ export function convertToNative(source: string): NativeConversion {
       node.declarationList.declarations.every((d) => isInstanceDestructure(d, instanceName)) &&
       !inHeader(node.getStart(sf))
     ) {
-      // Remove the whole line: leading indentation through the trailing newline,
-      // so no blank line is left behind for the dedent pass to keep.
-      let start = node.getStart(sf);
-      while (start > bodyStart && source[start - 1] !== "\n") start--;
-      let end = node.getEnd();
-      while (end < bodyEnd && source[end] !== "\n") end++;
-      if (end < bodyEnd) end++; // consume the newline itself
-      edits.push({ start, end, text: "" });
+      edits.push(removeWholeLines(node));
       return; // don't descend; the declaration is being removed wholesale
+    }
+
+    // R6: strip TypeScript-only member modifiers (readonly / access / abstract /
+    // override / declare). `static` and the rest are valid JS, so keep them.
+    if (ts.canHaveModifiers(node)) {
+      for (const mod of ts.getModifiers(node) ?? []) {
+        if (TS_ONLY_MODIFIERS.has(mod.kind) && !inHeader(mod.getStart(sf))) {
+          let end = mod.getEnd();
+          while (end < bodyEnd && (source[end] === " " || source[end] === "\t")) end++;
+          edits.push({ start: mod.getStart(sf), end, text: "" });
+        }
+      }
     }
 
     // R5: remove the instance prefix from instance member access.
@@ -159,6 +219,7 @@ export function convertToNative(source: string): NativeConversion {
       typed.type &&
       (ts.isVariableDeclaration(node) ||
         ts.isParameter(node) ||
+        ts.isPropertyDeclaration(node) ||
         ts.isFunctionDeclaration(node) ||
         ts.isFunctionExpression(node) ||
         ts.isArrowFunction(node) ||
