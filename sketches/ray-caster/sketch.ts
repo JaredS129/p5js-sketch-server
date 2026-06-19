@@ -20,6 +20,13 @@ export default function sketch(p: p5): void {
     [W, W, W, W, W, W],
   ];
 
+  const DIRECTIONS = [
+    { key: p.UP_ARROW, dx: 0, dy: -1 },
+    { key: p.DOWN_ARROW, dx: 0, dy: 1 },
+    { key: p.LEFT_ARROW, dx: -1, dy: 0 },
+    { key: p.RIGHT_ARROW, dx: 1, dy: 0 },
+  ];
+
   const BLOCK_SIZE: number = 100;
   const HORIZONTAL_RESOLUTION: number = 320;
 
@@ -70,13 +77,6 @@ export default function sketch(p: p5): void {
       40,
       40,
     );
-
-    const DIRECTIONS = [
-      { key: p.UP_ARROW, dx: 0, dy: -1 },
-      { key: p.DOWN_ARROW, dx: 0, dy: 1 },
-      { key: p.LEFT_ARROW, dx: -1, dy: 0 },
-      { key: p.RIGHT_ARROW, dx: 1, dy: 0 },
-    ];
 
     for (const { key, dx, dy } of DIRECTIONS) {
       if (p.keyIsDown(key)) {
