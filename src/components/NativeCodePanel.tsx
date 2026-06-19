@@ -24,6 +24,8 @@ export function NativeCodePanel({ loadSource, sketchId }: NativeCodePanelProps) 
   const [message, setMessage] = useState("");
   // The raw converted string is the source of truth for copy & selection (FR-016, B4).
   const [code, setCode] = useState("");
+  // Non-p5 imports whose definitions were dropped from the native output (see native-p5.ts).
+  const [externalImports, setExternalImports] = useState<string[]>([]);
   const [copyState, setCopyState] = useState<CopyState>("idle");
 
   const codeRef = useRef<HTMLElement>(null);
@@ -41,6 +43,7 @@ export function NativeCodePanel({ loadSource, sketchId }: NativeCodePanelProps) 
         const result = convertToNative(source);
         if (result.ok) {
           setCode(result.code);
+          setExternalImports(result.externalImports);
           setStatus("ready");
         } else {
           setMessage(result.reason);
@@ -118,6 +121,23 @@ export function NativeCodePanel({ loadSource, sketchId }: NativeCodePanelProps) 
       {status === "error" && (
         <p className="px-4 py-6 text-sm text-muted">
           This sketch could not be converted to native p5.js: {message}
+        </p>
+      )}
+
+      {status === "ready" && externalImports.length > 0 && (
+        <p
+          role="note"
+          className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs text-amber-300/90"
+        >
+          This sketch imports{" "}
+          {externalImports.map((mod, i) => (
+            <span key={mod}>
+              {i > 0 && ", "}
+              <code className="font-mono">{mod}</code>
+            </span>
+          ))}
+          . Imports are dropped from the native output, so this code won't run standalone
+          in the p5.js editor until those dependencies are inlined or removed.
         </p>
       )}
 

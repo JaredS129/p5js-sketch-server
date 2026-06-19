@@ -85,6 +85,24 @@ describe("convertToNative — transform rules", () => {
   });
 });
 
+describe("convertToNative — external import reporting", () => {
+  it("reports non-p5 imports whose definitions are dropped from the output", () => {
+    const res = convertToNative(
+      `import type p5 from "p5";\nimport { createNoise2D } from "simplex-noise";\nimport { clamp } from "./utils";\nexport default function sketch(p: p5): void {\n  p.draw = () => { p.print(createNoise2D()(0, 0)); };\n}\n`,
+    );
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.externalImports).toEqual(["simplex-noise", "./utils"]);
+  });
+
+  it("does not flag the p5 import (or its subpaths)", () => {
+    const res = convertToNative(
+      `import p5 from "p5";\nimport "p5/lib/addons/p5.sound";\nexport default function sketch(p: p5): void {\n  p.setup = () => {};\n}\n`,
+    );
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.externalImports).toEqual([]);
+  });
+});
+
 describe("convertToNative — failure contract (FR-015)", () => {
   const fails = (source: string) => {
     const res = convertToNative(source);

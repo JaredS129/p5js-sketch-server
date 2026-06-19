@@ -7,8 +7,14 @@ import ts from "typescript";
  * See `specs/002-native-p5js-output/contracts/native-conversion.md`.
  */
 export type NativeConversion =
-  | { ok: true; code: string }
+  | { ok: true; code: string; externalImports: string[] }
   | { ok: false; reason: string };
+
+/** True for module specifiers that resolve to p5 itself (the only dependency the
+ *  global-mode editor provides). Everything else is dropped with no replacement. */
+function isP5Module(specifier: string): boolean {
+  return specifier === "p5" || specifier.startsWith("p5/");
+}
 
 /** A text edit applied to the original source: replace [start, end) with `text`. */
 interface Edit {
@@ -53,9 +59,23 @@ export function convertToNative(source: string): NativeConversion {
 
   // Reject unsupported top-level constructs (anything other than imports and the
   // single default-export factory). Helpers/consts must live inside the factory.
+  //
+  // Imports are tolerated but never emitted (only the factory body is). Collect any
+  // non-p5 specifiers so the panel can warn that the native output references symbols
+  // whose defining import was dropped and is unavailable in the global-mode editor.
+  const externalImports: string[] = [];
   for (const stmt of sf.statements) {
     if (stmt === factory.node) continue;
-    if (ts.isImportDeclaration(stmt) || ts.isImportEqualsDeclaration(stmt)) continue;
+    if (ts.isImportDeclaration(stmt)) {
+      if (
+        ts.isStringLiteral(stmt.moduleSpecifier) &&
+        !isP5Module(stmt.moduleSpecifier.text)
+      ) {
+        externalImports.push(stmt.moduleSpecifier.text);
+      }
+      continue;
+    }
+    if (ts.isImportEqualsDeclaration(stmt)) continue;
     return { ok: false, reason: "Unsupported module structure for native conversion" };
   }
 
@@ -153,7 +173,7 @@ export function convertToNative(source: string): NativeConversion {
     out = out.slice(0, e.start - bodyStart) + e.text + out.slice(e.end - bodyStart);
   }
 
-  return { ok: true, code: dedent(out) };
+  return { ok: true, code: dedent(out), externalImports: [...new Set(externalImports)] };
 }
 
 /** A recognised p5 lifecycle-hook assignment: `instance.<name> = <arrow|function>`. */

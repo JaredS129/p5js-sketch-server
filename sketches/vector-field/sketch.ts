@@ -9,7 +9,7 @@ import type p5 from "p5";
  */
 export default function sketch(p: p5): void {
   const SPACING = 30; // grid spacing between vectors
-  const RADIUS = 150; // influence radius
+  const RADIUS = 200; // influence radius
   const MAX_LEN = 22; // max arrow length at the mouse
   let cols: number, rows: number;
 
