@@ -1,5 +1,5 @@
 const SPACING = 30; // grid spacing between vectors
-const RADIUS = 150; // influence radius
+const RADIUS = 200; // influence radius
 const MAX_LEN = 22; // max arrow length at the mouse
 let cols, rows;
 
@@ -35,7 +35,8 @@ function draw() {
       }
 
       const len = strength * MAX_LEN;
-      toMouse.setMag(len);
+      const wobble = sin(i * TWO_PI) + cos(j * TWO_PI);
+      toMouse.setMag(len + wobble * 0);
 
       stroke(lerpColor(color(60, 120, 255), color(255, 90, 90), strength));
       strokeWeight(map(strength, 0, 1, 1, 2.5));

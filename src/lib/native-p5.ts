@@ -122,6 +122,26 @@ export function convertToNative(source: string): NativeConversion {
 
   // --- Walk the whole tree for prefix removal, type stripping, as/satisfies ---
   const visit = (node: ts.Node) => {
+    // R5b: drop destructuring of the p5 instance (`const { a, b } = p;`). In
+    // global mode those members are accessible globally, so the binding is dead
+    // weight; the references it introduced resolve to the globals unchanged.
+    if (
+      ts.isVariableStatement(node) &&
+      node.declarationList.declarations.length > 0 &&
+      node.declarationList.declarations.every((d) => isInstanceDestructure(d, instanceName)) &&
+      !inHeader(node.getStart(sf))
+    ) {
+      // Remove the whole line: leading indentation through the trailing newline,
+      // so no blank line is left behind for the dedent pass to keep.
+      let start = node.getStart(sf);
+      while (start > bodyStart && source[start - 1] !== "\n") start--;
+      let end = node.getEnd();
+      while (end < bodyEnd && source[end] !== "\n") end++;
+      if (end < bodyEnd) end++; // consume the newline itself
+      edits.push({ start, end, text: "" });
+      return; // don't descend; the declaration is being removed wholesale
+    }
+
     // R5: remove the instance prefix from instance member access.
     if (
       ts.isPropertyAccessExpression(node) &&
@@ -174,6 +194,16 @@ export function convertToNative(source: string): NativeConversion {
   }
 
   return { ok: true, code: dedent(out), externalImports: [...new Set(externalImports)] };
+}
+
+/** True for `const { … } = instance` — an object destructuring of the p5 instance. */
+function isInstanceDestructure(d: ts.VariableDeclaration, instanceName: string): boolean {
+  return (
+    ts.isObjectBindingPattern(d.name) &&
+    !!d.initializer &&
+    ts.isIdentifier(d.initializer) &&
+    d.initializer.text === instanceName
+  );
 }
 
 /** A recognised p5 lifecycle-hook assignment: `instance.<name> = <arrow|function>`. */

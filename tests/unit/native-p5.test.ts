@@ -12,10 +12,12 @@ function code(source: string): string {
   return res.ok ? res.code : "";
 }
 
-describe("convertToNative — vector-field fixture (SC-002)", () => {
-  it("converts the example sketch character-for-character to the pinned fixture", () => {
-    const source = read("sketches/vector-field/sketch.ts");
-    const expected = read("tests/unit/fixtures/vector-field.native.js");
+describe("convertToNative — golden fixture (SC-002)", () => {
+  it("converts the pinned sample sketch character-for-character to the golden output", () => {
+    // Both sides are dedicated fixtures (not a live sketch), so editing a real
+    // sketch under `sketches/` can never break this golden-output test.
+    const source = read("tests/unit/fixtures/sample-sketch.ts");
+    const expected = read("tests/unit/fixtures/sample-sketch.native.js");
     const res = convertToNative(source);
     expect(res.ok).toBe(true);
     if (res.ok) expect(res.code).toBe(expected);
@@ -75,6 +77,28 @@ describe("convertToNative — transform rules", () => {
     const out = code(`export default function sketch(p: p5): void {\n  p.setup = () => {\n    // keep me\n    p.createCanvas(1200, 1200);\n  };\n}\n`);
     expect(out).toContain("// keep me");
     expect(out).toContain("createCanvas(1200, 1200)");
+  });
+
+  it("R5b: drops destructuring of the p5 instance, leaving references as globals", () => {
+    const out = code(`export default function sketch(p: p5): void {\n  const { createCanvas, background } = p;\n  p.setup = () => {\n    createCanvas(100, 100);\n    background(0);\n  };\n}\n`);
+    expect(out).not.toContain("const {");
+    expect(out).not.toContain("= p");
+    expect(out).not.toMatch(/^\n/); // no leading blank line left where the binding was
+    expect(out).toContain("createCanvas(100, 100)");
+    expect(out).toContain("background(0)");
+    expect(out.startsWith("function setup()")).toBe(true);
+  });
+
+  it("R5b: drops instance destructuring inside a hook body too", () => {
+    const out = code(`export default function sketch(p: p5): void {\n  p.draw = () => {\n    const { background, ellipse } = p;\n    background(0);\n    ellipse(1, 2, 3, 4);\n  };\n}\n`);
+    expect(out).not.toContain("const {");
+    expect(out).toContain("background(0)");
+    expect(out).toContain("ellipse(1, 2, 3, 4)");
+  });
+
+  it("R5b guard: keeps non-instance destructuring (e.g. from a vector)", () => {
+    const out = code(`export default function sketch(p: p5): void {\n  p.draw = () => {\n    const v = p.createVector(1, 2);\n    const { x, y } = v;\n    p.print(x + y);\n  };\n}\n`);
+    expect(out).toContain("const { x, y } = v;");
   });
 
   it("supports an exported default arrow factory with a non-`p` instance name", () => {
