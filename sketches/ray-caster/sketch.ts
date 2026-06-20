@@ -42,7 +42,7 @@ export default function sketch(p: p5): void {
       this.startingY = props.startingY;
       this.posX = props.startingX;
       this.posY = props.startingY;
-      this.angle = -Math.PI / 2; // facing up
+      this.angle = -Math.PI * 1.5;
     }
   }
 
