@@ -20,20 +20,10 @@ export default function sketch(p: p5): void {
     [W, W, W, W, W, W],
   ];
 
-  const DIRECTIONS = [
-    { key: p.UP_ARROW, dx: 0, dy: -1 },
-    { key: p.DOWN_ARROW, dx: 0, dy: 1 },
-    { key: p.LEFT_ARROW, dx: -1, dy: 0 },
-    { key: p.RIGHT_ARROW, dx: 1, dy: 0 },
-    // WASD
-    { key: 87, dx: 0, dy: -1 },
-    { key: 83, dx: 0, dy: 1 },
-    { key: 65, dx: -1, dy: 0 },
-    { key: 68, dx: 1, dy: 0 },
-  ];
-
   const BLOCK_SIZE: number = 100;
   const HORIZONTAL_RESOLUTION: number = 320;
+  const ROTATION_SPEED: number = 0.04;
+  const MOVE_SPEED: number = 1;
 
   interface PlayerProps {
     startingX: number;
@@ -45,12 +35,14 @@ export default function sketch(p: p5): void {
     readonly startingY: number;
     posX: number;
     posY: number;
+    angle: number;
 
     constructor(props: PlayerProps) {
       this.startingX = props.startingX;
       this.startingY = props.startingY;
       this.posX = props.startingX;
       this.posY = props.startingY;
+      this.angle = -Math.PI / 2; // facing up
     }
   }
 
@@ -77,14 +69,11 @@ export default function sketch(p: p5): void {
     const PLAYER_ABS_POS_X = player.posX + BLOCK_SIZE * 2 - BLOCK_SIZE / 2;
     const PLAYER_ABS_POS_Y = player.posY + BLOCK_SIZE * 2 - BLOCK_SIZE / 2;
 
-    p.triangle(
-      PLAYER_ABS_POS_X,
-      PLAYER_ABS_POS_Y,
-      PLAYER_ABS_POS_X + 5,
-      PLAYER_ABS_POS_Y - 5,
-      PLAYER_ABS_POS_X - 5,
-      PLAYER_ABS_POS_Y - 5,
-    );
+    p.push();
+    p.translate(PLAYER_ABS_POS_X, PLAYER_ABS_POS_Y);
+    p.rotate(player.angle);
+    p.triangle(8, 0, -4, -5, -4, 5);
+    p.pop();
 
     const checkIfWithinWallBlock = (x: number, y: number): boolean => {
       const blockX = Math.ceil(x / BLOCK_SIZE + 0.5);
@@ -92,34 +81,23 @@ export default function sketch(p: p5): void {
       return MAP[blockY][blockX] === W;
     };
 
-    for (const { key, dx, dy } of DIRECTIONS) {
-      if (p.keyIsDown(key)) {
-        const newX = player.posX + dx;
-        const newY = player.posY + dy;
-
-        const newPosIsWithinWallBlock: boolean = checkIfWithinWallBlock(newX, newY);
-
-        if (newPosIsWithinWallBlock) {
-          continue;
-        }
-
-        player.posX = newX;
-        player.posY = newY;
-        break;
-      }
+    if (p.keyIsDown(p.LEFT_ARROW) || p.keyIsDown(65)) {
+      player.angle -= ROTATION_SPEED;
+    }
+    if (p.keyIsDown(p.RIGHT_ARROW) || p.keyIsDown(68)) {
+      player.angle += ROTATION_SPEED;
     }
 
-    // if (
-    //   !p.keyIsDown(p.UP_ARROW) &&
-    //   !p.keyIsDown(p.DOWN_ARROW) &&
-    //   !p.keyIsDown(p.LEFT_ARROW) &&
-    //   !p.keyIsDown(p.RIGHT_ARROW) &&
-    //   !p.keyIsDown(87) &&
-    //   !p.keyIsDown(83) &&
-    //   !p.keyIsDown(65) &&
-    //   !p.keyIsDown(68)
-    // ) {
-    //   hasMoved = false;
-    // }
+    const tryMove = (dir: number) => {
+      const newX = player.posX + Math.cos(player.angle) * MOVE_SPEED * dir;
+      const newY = player.posY + Math.sin(player.angle) * MOVE_SPEED * dir;
+      if (!checkIfWithinWallBlock(newX, newY)) {
+        player.posX = newX;
+        player.posY = newY;
+      }
+    };
+
+    if (p.keyIsDown(p.UP_ARROW) || p.keyIsDown(87)) tryMove(1);
+    if (p.keyIsDown(p.DOWN_ARROW) || p.keyIsDown(83)) tryMove(-1);
   };
 }
