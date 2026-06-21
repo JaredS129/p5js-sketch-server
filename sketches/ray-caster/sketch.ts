@@ -26,33 +26,49 @@ export default function sketch(p: p5): void {
   const MOVE_SPEED: number = 1;
 
   interface PlayerProps {
-    startingX: number;
-    startingY: number;
+    startingMapPositionX: number;
+    startingMapPositionY: number;
+    startingAngle: number;
   }
 
   class Player {
-    readonly startingX: number;
-    readonly startingY: number;
-    posX: number;
-    posY: number;
+    readonly startingMapPositionX: number;
+    readonly startingMapPositionY: number;
+    readonly startingAngle: number;
+    currentFieldPositionX: number;
+    currentFieldPositionY: number;
     angle: number;
 
     constructor(props: PlayerProps) {
-      this.startingX = props.startingX;
-      this.startingY = props.startingY;
-      this.posX = props.startingX;
-      this.posY = props.startingY;
-      this.angle = -Math.PI * 1.5;
+      this.startingMapPositionX = props.startingMapPositionX;
+      this.startingMapPositionY = props.startingMapPositionY;
+      this.startingAngle = props.startingAngle;
+      this.currentFieldPositionX = props.startingMapPositionX * BLOCK_SIZE - BLOCK_SIZE;
+      this.currentFieldPositionY = props.startingMapPositionY * BLOCK_SIZE - BLOCK_SIZE;
+      this.angle = ((props.startingAngle - 90) * Math.PI) / 180;
     }
   }
 
   const player: Player = new Player({
-    startingX: 1,
-    startingY: 1,
+    startingMapPositionX: 1,
+    startingMapPositionY: 1,
+    startingAngle: 180,
   });
 
   p.setup = () => {
     p.createCanvas(1200, 1200);
+  };
+
+  const getCanvasPositionFromFieldPosition = (x: number, y: number): number[] => {
+    const canvasX = x + BLOCK_SIZE * 2 - BLOCK_SIZE / 2;
+    const canvasY = y + BLOCK_SIZE * 2 - BLOCK_SIZE / 2;
+    return [canvasX, canvasY];
+  };
+
+  const isFieldPositionWithinWall = (x: number, y: number): boolean => {
+    const blockX = Math.ceil(x / BLOCK_SIZE + 0.5);
+    const blockY = Math.ceil(y / BLOCK_SIZE + 0.5);
+    return MAP[blockY][blockX] === W;
   };
 
   p.draw = () => {
@@ -66,20 +82,16 @@ export default function sketch(p: p5): void {
       }
     }
 
-    const PLAYER_ABS_POS_X = player.posX + BLOCK_SIZE * 2 - BLOCK_SIZE / 2;
-    const PLAYER_ABS_POS_Y = player.posY + BLOCK_SIZE * 2 - BLOCK_SIZE / 2;
+    const playerCanvasPostion = getCanvasPositionFromFieldPosition(
+      player.currentFieldPositionX,
+      player.currentFieldPositionY,
+    );
 
     p.push();
-    p.translate(PLAYER_ABS_POS_X, PLAYER_ABS_POS_Y);
+    p.translate(playerCanvasPostion[0], playerCanvasPostion[1]);
     p.rotate(player.angle);
     p.triangle(8, 0, -4, -5, -4, 5);
     p.pop();
-
-    const checkIfWithinWallBlock = (x: number, y: number): boolean => {
-      const blockX = Math.ceil(x / BLOCK_SIZE + 0.5);
-      const blockY = Math.ceil(y / BLOCK_SIZE + 0.5);
-      return MAP[blockY][blockX] === W;
-    };
 
     if (p.keyIsDown(p.LEFT_ARROW) || p.keyIsDown(65)) {
       player.angle -= ROTATION_SPEED;
@@ -89,11 +101,16 @@ export default function sketch(p: p5): void {
     }
 
     const tryMove = (dir: number) => {
-      const newX = player.posX + Math.cos(player.angle) * MOVE_SPEED * dir;
-      const newY = player.posY + Math.sin(player.angle) * MOVE_SPEED * dir;
-      if (!checkIfWithinWallBlock(newX, newY)) {
-        player.posX = newX;
-        player.posY = newY;
+      const newX =
+        player.currentFieldPositionX + Math.cos(player.angle) * MOVE_SPEED * dir;
+      const newY =
+        player.currentFieldPositionY + Math.sin(player.angle) * MOVE_SPEED * dir;
+
+      const newPlayerPositionIsWithinWall = isFieldPositionWithinWall(newX, newY);
+
+      if (!newPlayerPositionIsWithinWall) {
+        player.currentFieldPositionX = newX;
+        player.currentFieldPositionY = newY;
       }
     };
 
