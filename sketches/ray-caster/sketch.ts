@@ -116,5 +116,37 @@ export default function sketch(p: p5): void {
 
     if (p.keyIsDown(p.UP_ARROW) || p.keyIsDown(87)) tryMove(1);
     if (p.keyIsDown(p.DOWN_ARROW) || p.keyIsDown(83)) tryMove(-1);
+
+    // draw a yellow line from player position at the players angle until it meets a wall
+
+    const getRayLength = (): number => {
+      let rayLength: number = 0;
+      while (
+        !isFieldPositionWithinWall(
+          player.currentFieldPositionX + Math.cos(player.angle) * rayLength,
+          player.currentFieldPositionY + Math.sin(player.angle) * rayLength,
+        )
+      ) {
+        rayLength += 1;
+      }
+      return rayLength;
+    };
+
+    const rayLength: number = getRayLength();
+    const rayCanvasPosition = getCanvasPositionFromFieldPosition(
+      player.currentFieldPositionX + Math.cos(player.angle) * rayLength,
+      player.currentFieldPositionY + Math.sin(player.angle) * rayLength,
+    );
+
+    p.push();
+    p.stroke(255, 255, 0);
+    p.strokeWeight(1);
+    p.line(
+      playerCanvasPostion[0],
+      playerCanvasPostion[1],
+      rayCanvasPosition[0],
+      rayCanvasPosition[1],
+    );
+    p.pop();
   };
 }
