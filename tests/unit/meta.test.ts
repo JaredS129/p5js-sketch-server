@@ -13,6 +13,7 @@ const valid: SketchMeta = {
   dateUpdated: "2026-06-18",
   createdBy: "Jared Stevenson",
   lastUpdatedBy: "Jared Stevenson",
+  runner: "p5",
 };
 
 describe("parseMeta", () => {

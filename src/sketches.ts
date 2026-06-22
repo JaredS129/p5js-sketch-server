@@ -1,10 +1,13 @@
 import type p5 from "p5";
 import { safeParseMeta, type SketchMeta } from "../scripts/lib/meta";
 
-/** A sketch module: default-exports a p5 instance-mode factory. */
-export interface SketchModule {
+export interface P5SketchModule {
   default: (p: p5) => void;
 }
+export interface Q5SketchModule {
+  default: (q: Q5) => void;
+}
+export type SketchModule = P5SketchModule | Q5SketchModule;
 
 /** A discovered, valid sketch: its metadata + lazy code and raw-source loaders. */
 export interface SketchEntry {

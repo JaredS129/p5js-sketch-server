@@ -20,9 +20,11 @@ export default function sketch(p: p5): void {
     [W, W, W, W, W, W],
   ];
 
+  const MAP_COLS_LENGTH = MAP[0]?.length ?? 0;
+
   const BLOCK_SIZE: number = 50;
   const HORIZONTAL_RESOLUTION: number = 640;
-  const FOV: number = 60;
+  const FOV: number = 70;
   const ROTATION_SPEED: number = 0.04;
   const MOVE_SPEED: number = 1;
   const WALL_COLOR: string = "#0B0B8C";
@@ -81,10 +83,10 @@ export default function sketch(p: p5): void {
   const isFieldPositionWithinWall = (x: number, y: number): boolean => {
     const blockX = Math.ceil(x / BLOCK_SIZE + 0.5);
     const blockY = Math.ceil(y / BLOCK_SIZE + 0.5);
-    if (blockY < 0 || blockY >= MAP.length || blockX < 0 || blockX >= MAP[0].length) {
+    if (blockY < 0 || blockY >= MAP.length || blockX < 0 || blockX >= MAP_COLS_LENGTH) {
       return true;
     }
-    return MAP[blockY][blockX] === W;
+    return MAP[blockY]?.[blockX] === W;
   };
 
   const angleIncrementPerRay: number = ((FOV / HORIZONTAL_RESOLUTION) * Math.PI) / 180;
@@ -136,7 +138,7 @@ export default function sketch(p: p5): void {
       const sinAngle = Math.sin(angle);
       const rayLength: number = getRayLength(cosAngle, sinAngle);
 
-      const perpendicularRayLength = rayLength * Math.acos(angle - player.angle);
+      const perpendicularRayLength = rayLength * Math.cos(angle - player.angle);
       const wallStripHeight: number = (BLOCK_SIZE * p.height) / perpendicularRayLength;
       const brightness = Math.min(1, wallStripHeight / p.height);
       p.fill(wallColorR * brightness, wallColorG * brightness, wallColorB * brightness);

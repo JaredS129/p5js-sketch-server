@@ -10,10 +10,17 @@ export type NativeConversion =
   | { ok: true; code: string; externalImports: string[] }
   | { ok: false; reason: string };
 
-/** True for module specifiers that resolve to p5 itself (the only dependency the
- *  global-mode editor provides). Everything else is dropped with no replacement. */
-function isP5Module(specifier: string): boolean {
-  return specifier === "p5" || specifier.startsWith("p5/");
+/** True for module specifiers that are provided by the target runtime (p5/q5 globals
+ *  and their official addons). These are silently dropped from the native output rather
+ *  than reported as missing external imports. */
+function isKnownModule(specifier: string): boolean {
+  return (
+    specifier === "p5" ||
+    specifier === "q5" ||
+    specifier === "p5play" ||
+    specifier === "q5play" ||
+    specifier === "./globals"
+  );
 }
 
 /** Modifier keywords that exist only in TypeScript and have no runtime form, so
@@ -82,7 +89,7 @@ export function convertToNative(source: string): NativeConversion {
     if (ts.isImportDeclaration(stmt)) {
       if (
         ts.isStringLiteral(stmt.moduleSpecifier) &&
-        !isP5Module(stmt.moduleSpecifier.text)
+        !isKnownModule(stmt.moduleSpecifier.text)
       ) {
         externalImports.push(stmt.moduleSpecifier.text);
       }

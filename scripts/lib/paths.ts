@@ -11,8 +11,22 @@ export const REPO_ROOT = path.resolve(
 /** Absolute path to the on-disk sketch store (`sketches/`). */
 export const SKETCHES_DIR = path.join(REPO_ROOT, "sketches");
 
-/** Absolute path to the starter sketch template. */
-export const SKETCH_TEMPLATE = path.join(REPO_ROOT, "templates", "sketch.ts.tmpl");
+export type SketchType = "p5" | "q5" | "p5play" | "q5play";
+
+const TMPL = (name: string) => path.join(REPO_ROOT, "templates", name);
+
+/** Per-type sketch boilerplate paths. */
+export const SKETCH_TEMPLATES: Record<SketchType, string> = {
+  p5: TMPL("sketch.ts.tmpl"),
+  q5: TMPL("sketch-q5.ts.tmpl"),
+  p5play: TMPL("sketch-p5play.ts.tmpl"),
+  q5play: TMPL("sketch-q5play.ts.tmpl"),
+};
+
+/** Extra files to copy alongside sketch.ts, keyed by type. */
+export const EXTRA_TEMPLATES: Partial<Record<SketchType, Array<{ tmpl: string; dest: string }>>> = {
+  p5play: [{ tmpl: TMPL("globals-p5play.ts.tmpl"), dest: "globals.ts" }],
+};
 
 /** Absolute path to a sketch's folder: `sketches/<id>/`. */
 export function sketchDir(id: string): string {

@@ -22,7 +22,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
 
-    "types": ["vite/client", "node", "vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vite/client", "node", "vitest/globals", "@testing-library/jest-dom", "q5", "q5play"]
   },
-  "include": ["src", "scripts", "tests", "vite.config.ts"]
+  "include": ["src", "scripts", "tests", "sketches", "vite.config.ts"]
 }

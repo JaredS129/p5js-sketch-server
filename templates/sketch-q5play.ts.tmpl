@@ -1,0 +1,13 @@
+import "q5";
+import "q5play";
+
+export default function sketch(q: Q5): void {
+  q.setup = async () => {
+    await q.Canvas(600, 600);
+    q.world.gravity.y = 10;
+  };
+
+  q.draw = () => {
+    q.background("#121212");
+  };
+}

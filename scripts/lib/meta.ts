@@ -17,6 +17,7 @@ export const SketchMetaSchema = z
     dateUpdated: z.string().regex(ISO_DATE, "dateUpdated must be YYYY-MM-DD"),
     createdBy: z.string().min(1, "createdBy must be non-empty"),
     lastUpdatedBy: z.string().min(1, "lastUpdatedBy must be non-empty"),
+    runner: z.enum(["p5", "q5"]).default("p5"),
   })
   .strict();
 
@@ -34,7 +35,7 @@ export function safeParseMeta(value: unknown) {
 
 /** Serialize metadata to the canonical on-disk JSON form (2-space indent + newline). */
 export function serializeMeta(meta: SketchMeta): string {
-  const ordered: SketchMeta = {
+  const ordered: Record<string, unknown> = {
     id: meta.id,
     name: meta.name,
     dateCreated: meta.dateCreated,
@@ -42,5 +43,6 @@ export function serializeMeta(meta: SketchMeta): string {
     createdBy: meta.createdBy,
     lastUpdatedBy: meta.lastUpdatedBy,
   };
+  if (meta.runner !== "p5") ordered["runner"] = meta.runner;
   return JSON.stringify(ordered, null, 2) + "\n";
 }

@@ -9,6 +9,8 @@ export interface NativeCodePanelProps {
   loadSource: () => Promise<string>;
   /** Sketch id — used as a remount/refresh key. */
   sketchId: string;
+  /** Controls the panel heading and copy label. Defaults to "p5". */
+  runner?: "p5" | "q5";
 }
 
 type Status = "loading" | "ready" | "error";
@@ -19,7 +21,8 @@ type CopyState = "idle" | "copied" | "failed";
  * instance-mode source, with Prism syntax highlighting, one-click copy, and `CTRL + A`
  * selection scoped to the panel. See contracts/native-output-panel.md.
  */
-export function NativeCodePanel({ loadSource, sketchId }: NativeCodePanelProps) {
+export function NativeCodePanel({ loadSource, sketchId, runner = "p5" }: NativeCodePanelProps) {
+  const label = runner === "q5" ? "Native q5.js" : "Native p5.js";
   const [status, setStatus] = useState<Status>("loading");
   const [message, setMessage] = useState("");
   // The raw converted string is the source of truth for copy & selection (FR-016, B4).
@@ -89,12 +92,12 @@ export function NativeCodePanel({ loadSource, sketchId }: NativeCodePanelProps) 
   return (
     <section className="rounded-lg border border-edge bg-surface">
       <header className="flex items-center justify-between border-b border-edge px-4 py-2">
-        <h2 className="text-sm font-semibold text-muted">Native p5.js</h2>
+        <h2 className="text-sm font-semibold text-muted">{label}</h2>
         {status === "ready" && (
           <button
             type="button"
             onClick={handleCopy}
-            aria-label="Copy native p5.js code"
+            aria-label={`Copy ${label} code`}
             className="inline-flex items-center gap-1.5 rounded-md border border-edge bg-surface-2 px-2.5 py-1 text-xs font-medium text-fg transition-colors hover:border-accent"
           >
             {copyState === "copied" ? (
@@ -120,7 +123,7 @@ export function NativeCodePanel({ loadSource, sketchId }: NativeCodePanelProps) 
 
       {status === "error" && (
         <p className="px-4 py-6 text-sm text-muted">
-          This sketch could not be converted to native p5.js: {message}
+          This sketch could not be converted to {label}: {message}
         </p>
       )}
 

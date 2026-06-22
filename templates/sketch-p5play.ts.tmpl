@@ -1,0 +1,14 @@
+import "./globals";
+import "p5play";
+import type p5 from "p5";
+
+export default function sketch(p: p5): void {
+  p.setup = () => {
+    p.createCanvas(600, 600);
+    p.world.gravity.y = 10;
+  };
+
+  p.draw = () => {
+    p.background(18);
+  };
+}

@@ -1,19 +1,13 @@
 import { Component, useEffect, useRef, useState, type ReactNode } from "react";
 import p5 from "p5";
-import type { SketchModule } from "../sketches";
+import type { Q5SketchModule, SketchModule } from "../sketches";
+
+const CANVAS_CLASS = "max-h-[85vh] overflow-auto rounded-xl border border-edge bg-black";
 
 /**
- * Mounts a p5 instance-mode sketch into a container and tears it down cleanly.
- *
- * Lifecycle (contracts/sketch-module.md, research D6):
- *   - on mount / id change: lazily import the module, `new p5(default, el)` → auto-runs
- *   - on unmount / before re-creating: `instance.remove()` (no leaks/duplicate loops)
- *
- * HMR: editing a sketch file triggers a Vite update; because the URL holds the
- * sketch id, the user stays on /sketch/:id (never reverts to home) and the change
- * is reflected on reload. (FR-008, US3)
+ * Mounts a p5 instance-mode sketch and tears it down cleanly on unmount.
  */
-function SketchRunner({ load }: { load: () => Promise<SketchModule> }) {
+function P5SketchRunner({ load }: { load: () => Promise<SketchModule> }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<Error | null>(null);
 
@@ -26,7 +20,7 @@ function SketchRunner({ load }: { load: () => Promise<SketchModule> }) {
     load()
       .then((mod) => {
         if (cancelled || !containerRef.current) return;
-        instance = new p5(mod.default, containerRef.current);
+        instance = new p5((mod as { default: (p: p5) => void }).default, containerRef.current);
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err : new Error(String(err)));
@@ -38,14 +32,44 @@ function SketchRunner({ load }: { load: () => Promise<SketchModule> }) {
     };
   }, [load]);
 
-  if (error) throw error; // surfaced by the surrounding SketchErrorBoundary
+  if (error) throw error;
 
-  return (
-    <div
-      ref={containerRef}
-      className="max-h-[85vh] overflow-auto rounded-xl border border-edge bg-black"
-    />
-  );
+  return <div ref={containerRef} className={CANVAS_CLASS} />;
+}
+
+/**
+ * Mounts a Q5 instance-mode sketch and tears it down cleanly on unmount.
+ * The sketch module default-exports `(q: Q5) => void` — Q5 calls it immediately,
+ * so `q.setup` / `q.draw` assignments happen synchronously before the first frame.
+ */
+function Q5SketchRunner({ load }: { load: () => Promise<SketchModule> }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let instance: Q5 | null = null;
+    let cancelled = false;
+    const el = containerRef.current;
+    if (!el) return;
+
+    load()
+      .then((mod) => {
+        if (cancelled || !containerRef.current) return;
+        instance = new Q5((mod as Q5SketchModule).default, containerRef.current);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err : new Error(String(err)));
+      });
+
+    return () => {
+      cancelled = true;
+      void instance?.remove();
+    };
+  }, [load]);
+
+  if (error) throw error;
+
+  return <div ref={containerRef} className={CANVAS_CLASS} />;
 }
 
 interface BoundaryProps {
@@ -56,7 +80,7 @@ interface BoundaryState {
   error: Error | null;
 }
 
-/** Isolates a crashing sketch so the rest of the app keeps working (Edge Cases). */
+/** Isolates a crashing sketch so the rest of the app keeps working. */
 class SketchErrorBoundary extends Component<BoundaryProps, BoundaryState> {
   state: BoundaryState = { error: null };
 
@@ -85,17 +109,20 @@ class SketchErrorBoundary extends Component<BoundaryProps, BoundaryState> {
   }
 }
 
-/** Public component: error-isolated, auto-running p5 sketch canvas. */
+/** Public component: error-isolated, auto-running sketch canvas. */
 export function SketchCanvas({
   sketchId,
   load,
+  runner,
 }: {
   sketchId: string;
   load: () => Promise<SketchModule>;
+  runner: "p5" | "q5";
 }) {
+  const Runner = runner === "q5" ? Q5SketchRunner : P5SketchRunner;
   return (
     <SketchErrorBoundary sketchId={sketchId}>
-      <SketchRunner key={sketchId} load={load} />
+      <Runner key={sketchId} load={load} />
     </SketchErrorBoundary>
   );
 }

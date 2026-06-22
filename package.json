@@ -20,9 +20,13 @@
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.1",
     "@tanstack/react-table": "^8.20.6",
+    "box2d3-wasm": "^5.2.0",
     "clsx": "^2.1.1",
     "p5": "^1.11.2",
+    "p5play": "^3.35.5",
     "prismjs": "^1.30.0",
+    "q5": "^4.7.3",
+    "q5play": "^4.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.1",

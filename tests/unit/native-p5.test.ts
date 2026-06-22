@@ -139,9 +139,9 @@ describe("convertToNative — external import reporting", () => {
     if (res.ok) expect(res.externalImports).toEqual(["simplex-noise", "./utils"]);
   });
 
-  it("does not flag the p5 import (or its subpaths)", () => {
+  it("does not flag known runtime imports (p5, q5, p5play, q5play, ./globals)", () => {
     const res = convertToNative(
-      `import p5 from "p5";\nimport "p5/lib/addons/p5.sound";\nexport default function sketch(p: p5): void {\n  p.setup = () => {};\n}\n`,
+      `import "p5";\nimport "q5";\nimport "p5play";\nimport "q5play";\nimport "./globals";\nexport default function sketch(p: p5): void {\n  p.setup = () => {};\n}\n`,
     );
     expect(res.ok).toBe(true);
     if (res.ok) expect(res.externalImports).toEqual([]);
