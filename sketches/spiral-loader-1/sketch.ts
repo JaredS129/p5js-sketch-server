@@ -10,7 +10,6 @@ import type p5 from "p5";
  */
 export default function sketch(p: p5): void {
   let waveWeight = 5;
-  let blurBuff;
 
   p.setup = () => {
     p.pixelDensity(2);
@@ -19,8 +18,6 @@ export default function sketch(p: p5): void {
     p.stroke(235);
     p.strokeWeight(waveWeight);
     p.angleMode(p.DEGREES);
-
-    blurBuff = p.createGraphics(p.width, p.height);
   };
 
   let sp1Amp = 20;
