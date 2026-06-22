@@ -10,8 +10,6 @@ import type p5 from "p5";
  * Do NOT use p5 global mode — multiple sketches share one app.
  */
 export default function sketch(p: p5): void {
-  let ssBuff;
-
   p.setup = () => {
     p.createCanvas(200, 200);
     p.stroke(215, 20);
