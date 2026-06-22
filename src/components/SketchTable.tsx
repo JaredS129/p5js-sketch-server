@@ -14,6 +14,7 @@ const columnHelper = createColumnHelper<SketchMeta>();
 
 const columns = [
   columnHelper.accessor("name", { header: "Name" }),
+  columnHelper.accessor("type", { header: "Type" }),
   columnHelper.accessor("dateCreated", { header: "Created" }),
   columnHelper.accessor("dateUpdated", { header: "Updated" }),
   columnHelper.accessor("createdBy", { header: "Created by" }),

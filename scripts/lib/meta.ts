@@ -9,6 +9,9 @@ import { z } from "zod";
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+export const SKETCH_TYPES = ["p5", "q5", "p5play", "q5play"] as const;
+export type SketchType = (typeof SKETCH_TYPES)[number];
+
 export const SketchMetaSchema = z
   .object({
     id: z.string().regex(SLUG, "id must be a kebab-case slug"),
@@ -17,11 +20,16 @@ export const SketchMetaSchema = z
     dateUpdated: z.string().regex(ISO_DATE, "dateUpdated must be YYYY-MM-DD"),
     createdBy: z.string().min(1, "createdBy must be non-empty"),
     lastUpdatedBy: z.string().min(1, "lastUpdatedBy must be non-empty"),
-    runner: z.enum(["p5", "q5"]).default("p5"),
+    type: z.enum(SKETCH_TYPES).default("p5"),
   })
   .strict();
 
 export type SketchMeta = z.infer<typeof SketchMetaSchema>;
+
+/** Returns which canvas runner a sketch type requires. */
+export function runnerFromType(type: SketchType): "p5" | "q5" {
+  return type === "q5" || type === "q5play" ? "q5" : "p5";
+}
 
 /** Parse + validate an unknown value as SketchMeta. Throws on invalid input. */
 export function parseMeta(value: unknown): SketchMeta {
@@ -43,6 +51,6 @@ export function serializeMeta(meta: SketchMeta): string {
     createdBy: meta.createdBy,
     lastUpdatedBy: meta.lastUpdatedBy,
   };
-  if (meta.runner !== "p5") ordered["runner"] = meta.runner;
+  if (meta.type !== "p5") ordered["type"] = meta.type;
   return JSON.stringify(ordered, null, 2) + "\n";
 }

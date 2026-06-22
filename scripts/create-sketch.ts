@@ -10,17 +10,9 @@ import {
   sketchCodePath,
 } from "./lib/paths";
 import { readMeta, writeMeta } from "./lib/meta-io";
-import type { SketchMeta } from "./lib/meta";
+import { type SketchMeta, SKETCH_TYPES } from "./lib/meta";
 
-const SKETCH_TYPES: SketchType[] = ["p5", "q5", "p5play", "q5play"];
-const RUNNER: Record<SketchType, "p5" | "q5"> = {
-  p5: "p5",
-  q5: "q5",
-  p5play: "p5",
-  q5play: "q5",
-};
-
-const USAGE = `Usage: npm run create-sketch -- "<name>" [--type p5|q5|p5play|q5play]`;
+const USAGE = `Usage: npm run create-sketch -- "<name>" [--type ${SKETCH_TYPES.join("|")}]`;
 
 function fail(message: string): never {
   console.error(message);
@@ -36,7 +28,7 @@ function parseArgs(argv: string[]): { name: string; type: SketchType } {
     const arg = args.shift()!;
     if (arg === "--type") {
       const val = args.shift();
-      if (!val || !(SKETCH_TYPES as string[]).includes(val)) {
+      if (!val || !(SKETCH_TYPES as readonly string[]).includes(val)) {
         fail(`--type must be one of: ${SKETCH_TYPES.join(", ")}`);
       }
       type = val as SketchType;
@@ -89,7 +81,7 @@ function main(): void {
     dateUpdated: date,
     createdBy,
     lastUpdatedBy: createdBy,
-    runner: RUNNER[type],
+    type,
   };
 
   fs.mkdirSync(dir, { recursive: true });

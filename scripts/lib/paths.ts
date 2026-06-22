@@ -11,7 +11,8 @@ export const REPO_ROOT = path.resolve(
 /** Absolute path to the on-disk sketch store (`sketches/`). */
 export const SKETCHES_DIR = path.join(REPO_ROOT, "sketches");
 
-export type SketchType = "p5" | "q5" | "p5play" | "q5play";
+import type { SketchType } from "./meta";
+export type { SketchType };
 
 const TMPL = (name: string) => path.join(REPO_ROOT, "templates", name);
 

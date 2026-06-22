@@ -4,6 +4,7 @@ import type { SketchMeta } from "../../scripts/lib/meta";
 export const META_FIELDS = [
   { key: "name", label: "Name" },
   { key: "id", label: "ID" },
+  { key: "type", label: "Type" },
   { key: "dateCreated", label: "Created" },
   { key: "dateUpdated", label: "Updated" },
   { key: "createdBy", label: "Created by" },

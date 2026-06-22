@@ -75,7 +75,7 @@ function main(): void {
     dateUpdated: date,
     createdBy,
     lastUpdatedBy: createdBy,
-    runner: "p5",
+    type: sourceMeta.type,
   };
 
   fs.cpSync(sourceDir, dir, { recursive: true });

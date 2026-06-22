@@ -12,7 +12,7 @@ const data: SketchMeta[] = [
     dateUpdated: "2026-06-10",
     createdBy: "Ada Lovelace",
     lastUpdatedBy: "Grace Hopper",
-    runner: "p5",
+    type: "p5",
   },
   {
     id: "particle-system",
@@ -21,7 +21,7 @@ const data: SketchMeta[] = [
     dateUpdated: "2026-05-20",
     createdBy: "Alan Turing",
     lastUpdatedBy: "Alan Turing",
-    runner: "p5",
+    type: "p5",
   },
 ];
 

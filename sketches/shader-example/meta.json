@@ -1,9 +1,8 @@
 {
-  "id": "q5-example",
-  "name": "q5 Example",
+  "id": "shader-example",
+  "name": "Shader Example",
   "dateCreated": "2026-06-22",
   "dateUpdated": "2026-06-22",
   "createdBy": "Jared Stevenson",
-  "lastUpdatedBy": "Jared Stevenson",
-  "type": "q5"
+  "lastUpdatedBy": "Jared Stevenson"
 }
