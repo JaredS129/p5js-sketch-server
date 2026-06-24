@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import type { Plugin } from "vite";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { isValidSlug } from "../../scripts/lib/slug";
@@ -11,6 +12,8 @@ import {
 import {
   sketchDir,
   sketchCodePath,
+  metaPath,
+  SKETCHES_DIR,
   SKETCH_TEMPLATES,
   EXTRA_TEMPLATES,
 } from "../../scripts/lib/paths";
@@ -238,6 +241,25 @@ export function sketchApi(): Plugin {
         }
 
         next();
+      });
+
+      // Watch sketch code files and stamp dateUpdated / lastUpdatedBy on save.
+      // meta.json writes are excluded so our own writeMeta calls don't re-trigger.
+      server.watcher.add(SKETCHES_DIR);
+      server.watcher.on("change", (filePath) => {
+        if (!filePath.startsWith(SKETCHES_DIR + path.sep)) return;
+        const parts = path.relative(SKETCHES_DIR, filePath).split(path.sep);
+        if (parts.length < 2) return;
+        const [id, file] = parts;
+        if (file === "meta.json" || !fs.existsSync(metaPath(id!))) return;
+        try {
+          const meta = readMeta(id!);
+          let updatedBy: string;
+          try { updatedBy = getGitUserName(); } catch { updatedBy = "unknown"; }
+          writeMeta(id!, { ...meta, dateUpdated: today(), lastUpdatedBy: updatedBy });
+        } catch {
+          // Don't crash the dev server on meta update failure
+        }
       });
     },
   };

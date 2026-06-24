@@ -24,7 +24,7 @@ export default function sketch(p: p5): void {
 
   const BLOCK_SIZE: number = 50;
   const HORIZONTAL_RESOLUTION: number = 640;
-  const FOV: number = 70;
+  const FOV: number = 60;
   const ROTATION_SPEED: number = 0.04;
   const MOVE_SPEED: number = 1;
   const WALL_COLOR: string = "#0B0B8C";
