@@ -1,33 +1,45 @@
-# p5.js Sketch Gallery & Local Dev Server
+# Sketch-Book
 
-A local, hot-reloadable web app that auto-discovers your p5.js sketches from disk,
-lists them in a dark, modern table, and runs any sketch on its own routed page.
-The UI is **view-only** — all create/update/delete happens through CLI scripts.
-No database: each sketch's metadata lives in a per-sketch `meta.json`.
+A local, hot-reloadable web app for building and browsing creative coding sketches.
+Supports **p5**, **q5**, **p5play**, and **q5play** — each sketch runs on its own routed
+page. Create, edit, duplicate, and delete sketches directly in the browser. No database:
+each sketch's metadata lives in a per-sketch `meta.json`.
 
 ## Quick start
 
 ```bash
 npm install
-npm run create-sketch "Flow Field"   # scaffold a sketch
-npm run dev                          # start the gallery (Vite)
+npm run dev   # start the gallery (Vite)
 ```
 
-Open the printed URL, click a row, and the sketch runs automatically. Edit the
-sketch's `sketch.ts` and the browser hot-reloads in place — staying on the same
-sketch page.
+Open the printed URL. Use the **New Sketch** button in the gallery to create your first
+sketch, pick a renderer, and start editing. The browser hot-reloads in place while you
+work — staying on the same sketch page.
 
 ## Folder convention
 
 ```text
 sketches/
 └── <id>/                # id = kebab-case slug of the name; also the route id
-    ├── meta.json        # name, dateCreated, dateUpdated, createdBy, lastUpdatedBy, id
-    ├── sketch.ts        # default export: (p: p5) => void  (p5 instance mode)
+    ├── meta.json        # name, type, tags, dates, authors
+    ├── sketch.ts        # default export: factory function (see below)
     └── assets/          # optional
 ```
 
-Each `sketch.ts` must default-export a p5 **instance-mode** factory (never global mode):
+`meta.json` fields:
+
+| Field | Description |
+|-------|-------------|
+| `id` | URL-safe slug — matches the folder name and route |
+| `name` | Human-friendly display name |
+| `type` | `"p5"` · `"q5"` · `"p5play"` · `"q5play"` (default `"p5"`) |
+| `tags` | Array of lowercase single-word strings (optional) |
+| `dateCreated` / `createdBy` | Set at creation time, immutable |
+| `dateUpdated` / `lastUpdatedBy` | Updated on every save via the UI |
+
+## Writing sketches
+
+**p5 / p5play** — instance-mode factory:
 
 ```ts
 import type p5 from "p5";
@@ -37,6 +49,24 @@ export default function sketch(p: p5) {
 }
 ```
 
+**q5 / q5play** — same shape, different instance type:
+
+```ts
+import "q5";
+export default function sketch(q: Q5) {
+  q.setup = async () => { await q.Canvas(600, 400); };
+  q.draw = () => q.background(18);
+}
+```
+
+## Gallery features
+
+- **Name search** — live substring filter, case-insensitive
+- **Type filter** — multi-select (p5 / q5 / p5play / q5play)
+- **Tag filter** — autocomplete, AND logic across selected tags
+- **Author filter** — multi-select
+- **Actions** — duplicate, edit, or delete any sketch from the row; clear all filters with one button
+
 ## Scripts
 
 | Script | Purpose |
@@ -44,27 +74,11 @@ export default function sketch(p: p5) {
 | `npm run dev` | Start the hot-reloadable dev server |
 | `npm run build` | Type-check + production build |
 | `npm run preview` | Serve the production build |
-| `npm run create-sketch -- "<name>"` | Scaffold a new sketch (captures `createdBy` from `git config user.name`) |
-| `npm run duplicate-sketch -- "<source name\|id>" ["<new name>"]` | Copy a sketch's folder; new name defaults to `"<source> - Copy"` |
-| `npm run delete-sketch -- "<name>"` | Hard-delete a sketch folder |
-| `npm run update-sketch-meta` | (CI) refresh `dateUpdated`/`lastUpdatedBy` from git history |
 | `npm test` | Run the Vitest suite |
-| `npm run lint` / `npm run typecheck` | Lint / type-check |
-
-> Note the `--` before the name so npm passes the argument through to the script.
-
-## Metadata & git attribution
-
-- `createdBy` / `dateCreated` are captured **once** at create time and are immutable.
-- `lastUpdatedBy` / `dateUpdated` are maintained by `update-sketch-meta`, which runs in
-  CI on pull requests (`.github/workflows/update-sketch-meta.yml`). It finds the latest
-  commit that changed a sketch's code (everything under the folder **except** `meta.json`,
-  to avoid a feedback loop) and commits the refreshed `meta.json` back to the PR branch.
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript type-check only |
 
 ## Stack
 
-Vite 6 · React 19 + TypeScript · React Router 7 · Tailwind CSS v4 (dark-by-default) +
-Radix primitives · TanStack Table · p5 (instance mode) · zod · CLI via `tsx`.
-
-See [`specs/001-p5js-sketch-gallery/`](./specs/001-p5js-sketch-gallery/) for the full
-spec, plan, and contracts.
+Vite 6 · React 19 + TypeScript · React Router 7 · Tailwind CSS v4 (dark-by-default) ·
+Radix UI primitives · TanStack Table · p5 (instance mode) · q5 + q5play · zod · `tsx`
